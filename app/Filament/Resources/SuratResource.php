@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\SuratResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\SuratResource\RelationManagers;
+use Filament\Tables\Actions\Action;
 
 class SuratResource extends Resource
 {
@@ -95,6 +96,27 @@ class SuratResource extends Resource
                 ->label('Ubah'),
                 Tables\Actions\DeleteAction::make()
                 ->label('Hapus'),
+                Tables\Actions\Action::make('cetak_surat')
+                ->label('Cetak Surat')
+                ->url(function ($record) {
+                    if (!$record->kategori_surat_id) {
+                        return null;
+                    }
+
+                    // Tentukan template berdasarkan kategori_surat_id
+                    $template = match((int) $record->kategori_surat_id) {
+                        1 => 'keterangan_tidak_mampu', // ID 1 -> template khusus
+                        default => 'default', // Template default untuk kategori lain
+                    };
+                    
+                    return route('surat.cetak', [
+                        'id' => $record->id,
+                        'template' => $template
+                    ]);
+                })
+                ->openUrlInNewTab()
+                ->icon('heroicon-o-printer')
+                ->color('success')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
