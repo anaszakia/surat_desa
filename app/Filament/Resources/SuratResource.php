@@ -2,18 +2,22 @@
 
 namespace App\Filament\Resources;
 
+use Carbon\Carbon;
+use App\Models\Ttd;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Surat;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Forms\Components\Select;
 use App\Models\KategoriSurat;
+use Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\SuratResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\SuratResource\RelationManagers;
-use Filament\Tables\Actions\Action;
 
 class SuratResource extends Resource
 {
@@ -37,22 +41,59 @@ class SuratResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('nik')
                     ->required()
+                    ->numeric()
+                    ->mask('9999999999999999')
                     ->label('NIK')
                     ->maxLength(20),
+                Forms\Components\TextInput::make('tempat_lahir')
+                    ->required()
+                    ->label('Tempat Lahir')
+                    ->maxLength(255),
+                Forms\Components\DatePicker::make('tanggal_lahir')
+                    ->required()
+                    ->label('Tanggal Lahir'),
+                Forms\Components\Select::make('agama')
+                    ->options([
+                        'ISLAM' => 'ISLAM',
+                        'KRISTEN PROTESTAN' => 'KRISTEN PROTESTAN',
+                        'KRISTEN KATOLIK' => 'KRISTEN KATOLIK',
+                        'HINDU' => 'HINDU',
+                        'BUDHA' => 'BUDHA',
+                        'KONGHUCU' => 'KONGHUCU'
+                    ])
+                    ->required()
+                    ->label('Agama'),
+                Forms\Components\Select::make('jenis_kelamin')
+                    ->options([
+                        'LAKI-LAKI' => "LAKI-LAKI",
+                        'PEREMPUAN' => "PEREMPUAN"
+                    ])
+                    ->required()
+                    ->label('Jenis Kelamin'),
                 Forms\Components\Textarea::make('alamat')
                     ->required()
                     ->label('Alamat')
                     ->columnSpanFull(),
-                Forms\Components\DatePicker::make('tanggal_terbit')
+                Forms\Components\TextInput::make('pekerjaan')
+                    ->required()
+                    ->label('Pekerjaan'),
+                 Forms\Components\DatePicker::make('tanggal_terbit')
                     ->label('Tanggal Terbit')
                     ->default(fn () => now())
                     ->required(),
                 Forms\Components\TextInput::make('nomor_surat')
                     ->label('Nomor Surat')
                     ->disabled()
+                    ->placeholder('Otomatis Generate (tidak usah di isi)')
                     ->dehydrated(false)
-                    ->default(fn () => null), // biarkan kosong, diisi otomatis di model saat saving
+                    ->default(fn () => null),
+                Forms\Components\TextInput::make('keperluan')
+                    ->label('Keperluan'),
                 Forms\Components\TextInput::make('data_lainnya'),
+                Forms\Components\Select::make('ttd_id')
+                    ->required()
+                    ->options(Ttd::all()->pluck('nama', 'id'))
+                    ->label('Penandatangan')
             ]);
     }
 
@@ -96,27 +137,17 @@ class SuratResource extends Resource
                 ->label('Ubah'),
                 Tables\Actions\DeleteAction::make()
                 ->label('Hapus'),
-                Tables\Actions\Action::make('cetak_surat')
+               Tables\Actions\Action::make('cetak_surat')
                 ->label('Cetak Surat')
                 ->url(function ($record) {
-                    if (!$record->kategori_surat_id) {
-                        return null;
-                    }
-
-                    // Tentukan template berdasarkan kategori_surat_id
-                    $template = match((int) $record->kategori_surat_id) {
-                        1 => 'keterangan_tidak_mampu', // ID 1 -> template khusus
-                        default => 'default', // Template default untuk kategori lain
-                    };
-                    
                     return route('surat.cetak', [
                         'id' => $record->id,
-                        'template' => $template
+                        'template' => 'keterangan_tidak_mampu', // Semua diarahkan ke template ini
                     ]);
                 })
                 ->openUrlInNewTab()
                 ->icon('heroicon-o-printer')
-                ->color('success')
+                ->color('success'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Ttd;
 use App\Models\KategoriSurat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +19,13 @@ class Surat extends Model
         'tanggal_terbit',
         'nomor_surat',
         'data_lainnya',
+        'jenis_kelamin',
+        'pekerjaan',
+        'keperluan',
+        'ttd_id',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'agama'
     ];
 
     protected $casts = [
@@ -28,6 +36,11 @@ class Surat extends Model
     public function kategori()
     {
         return $this->belongsTo(KategoriSurat::class, 'kategori_surat_id');
+    }
+
+    public function ttd()
+    {
+        return $this->belongsTo(Ttd::class, 'ttd_id');
     }
 
     // Logic penomoran otomatis bisa diletakkan di boot method
